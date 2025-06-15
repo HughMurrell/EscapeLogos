@@ -217,7 +217,7 @@ to an integer matrix.
 aa2int(ss::AbstractVector{String}) = hcat(aa2int.(ss)...)
 
 
-const GAP = 'X'
+const GAP = '∇'
 aa_alphabet() = replace(aa_letters(), '-' => GAP)
 logo_from_matrix_aa(w::AbstractMatrix) = logo_from_matrix(w, aa_alphabet())
 
@@ -515,10 +515,11 @@ aa_colors = Dict(
      '.'=>RGB{Float64}(1.0,1.0,1.0),
      '<'=>RGB{Float64}(1.0,1.0,1.0),
      '>'=>RGB{Float64}(1.0,1.0,1.0),
+     '∇'=>RGB{Float64}(0.1,0.1,0.1),
      ' '=>RGB{Float64}(1.0,1.0,1.0));
 
 function aa_color_fun(ch)
-    if ch=='|'
+    if ch=='|' || ch=='∇'
         return("grey80")
     end
     return(aa_color(ch)) #s[ch])
@@ -577,11 +578,19 @@ function generate_logo_frames(fasta_path, ept, outdir; file_count=0, prefix="")
     logo_frames=[]
     progress_bar=" "
     donor=""
-    donor=join(split(basename(fasta_path),'_')[2:6],'_')
+    donor=join(split(basename(fasta_path),'_')[2:4],'_')
     @show(donor)
     records = collect(FASTX.FASTA.Reader(open(fasta_path)))
     all_seqs = (x->FASTX.sequence(String,x)).(records)
     all_nams = FASTX.description.(records)
+    gapyness = (x->sum(collect(x).=='-')/length(x)).(all_seqs)
+    @show gapyness[1], maximum(gapyness)
+    sel_inds = gapyness .<= 1.0 # 1 keeps all, try 0.05 here to get rid of 5% gappy sequences
+    sel_inds[1] = true
+    sel_inds[2] = true
+    println("keeping $(sum(sel_inds)) out of $(length(all_seqs))")
+    all_seqs=all_seqs[sel_inds]
+    all_nams=all_nams[sel_inds]
     # close(fasta_path)
     # drop pool 6 sequences in ellpaca data
     # not_pool6=(x->!contains(x,"pool6")).(all_nams)
@@ -690,15 +699,17 @@ function generate_logo_frames(fasta_path, ept, outdir; file_count=0, prefix="")
                 annot=ept_annot,
                 title=title, 
                 # ref_annot="$(all_nams[1][1:15])",
-                bot_annot=" Consensus TP($(visits[1]))($(fvsc))",
-                mid_annot=" Variant sites TP($(visit))($(lvsc))",
-                top_annot=" Variant frequency TP($(visit))");
+                bot_annot=" Consensus (TP$(visits[1]))($(fvsc))",
+                mid_annot=" Variant sites (TP$(visit))($(lvsc))",
+                top_annot=" Variant frequency (TP$(visit))");
             logo_frames=vcat(logo_frames,[path_png])
         end
     end
     # return(file_count)
     return(logo_frames)
 end
+
+################# functions for generating alignments ##########################
 
 """
     mafft(inpath, outpath; path="", flags::Vector{String}=String[], kwargs...)
@@ -765,5 +776,34 @@ function my_write_fasta(filename, seqs;
     close(stream)
 end
 
-            
+###################### script starts here #############################
 
+# produce two logo plots for each alignment file, one showing escape from
+# consensus at tp1, the other showing escape from consensus at tp2
+#
+# using the default epitope, ept
+#
+@show ept
+in_dir = "alignments/"
+filepaths = readdir(in_dir)
+filepaths = in_dir .* filepaths[(x->endswith(x,".fasta")).(filepaths)] 
+@show filepaths           
+
+out_dir="escape_logos/"
+mkpath(out_dir)
+count=0
+for filepath in filepaths
+    println(filepath)
+    global count+=1
+    generate_logo_frames(filepath, ept,out_dir,file_count=count,prefix="")
+end
+
+# now get rid or timepoint 1 escape logos
+filepaths = readdir(out_dir)
+filepaths = out_dir .* filepaths[(x->endswith(x,"timepoint_1.svg")).(filepaths)]
+for filepath in filepaths
+    cmd = `rm $(filepath)`
+    run(cmd)
+end
+
+@show count
