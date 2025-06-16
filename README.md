@@ -99,7 +99,7 @@ julia escapelogos.jl
 ```
 and the script will parse the alignments in the `alignments` directory 
 and the resulting `svg` logo for each timepoint will appear in the
-`escape_logos` directory.
+`logos` directory.
 
 alternatively, you can specify input and output directories as follows:
 

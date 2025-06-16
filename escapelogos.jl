@@ -841,7 +841,7 @@ if length(filepaths) == 0
 end
 @show filepaths           
 
-out_dir="escape_logos/"
+out_dir="logos/"
 if length(ARGS) > 1
     out_dir=ARGS[2]
     endswith(out_dir,"/") ? nothing : out_dir=out_dir*"/"
@@ -854,6 +854,8 @@ for filepath in filepaths
     global count+=1
     generate_logo_frames(filepath, ept,out_dir,file_count=count,prefix="")
 end
+
+exit()
 
 # code to get rid or timepoint 1 escape logos if they are not needed
 filepaths = readdir(out_dir)
