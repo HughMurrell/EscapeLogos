@@ -83,10 +83,10 @@ The second sequence in each fasta file should be a sequence from which
 **escape** is estimated. We use a consensus of the first timepoint for
 this sequence.
 
-All other sequence identifiers in each fasta file should be annotated with
-the text **tpn** where **n** is the timepoint for that sequence. In
-our case we use **tp1** for the first timepoint and **tp2** for the second
-timepoint. 
+All other sequence identifiers in each fasta file should be annotated by
+appending the text `_tpn` where `n` is the single digit timepoint for 
+that sequence. In our case we use `_tp1` for the first timepoint and 
+`_tp2` for the second timepoint. You can have up to 9 timepoints.
 
 ### running the script
 
@@ -96,7 +96,8 @@ to run the script, type
 julia escapelogos.jl
 ```
 and the script will parse the alignments in the `alignments` directory 
-and the resulting `svg` logos will appear in the `escape_logos` directory.
+and the resulting `svg` logo for each timepoint will appear in the
+`escape_logos` directory.
 
 alternatively, you can specify input and output directories as follows:
 
@@ -112,5 +113,5 @@ script you will find definitions for the default epitope and two others.
 Use the same structure to define your own epitope and then set the **ept**
 variable accordingly.
 
-Also, we have a filter available for **gappy** sequences. You can set this
-constant in the script to suit your requirements.
+Also, we have a filter available for **gappy** sequences. You can set 
+the `GAPY_CUTOFF` constant in the script to suit your requirements.
