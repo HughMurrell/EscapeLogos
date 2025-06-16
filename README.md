@@ -124,7 +124,7 @@ The AA alignments and logos found in this repository are discussed in
 one of the following papers:
 
 <a id="1">[1]</a> 
-Willanson et. al. (2025). 
+Williamson et. al. (2025). 
 Post-acquisition VRC01 escape mechanisms in antibody-mediated prevention:
 Implications for next generation CD4-broadly neutralizing antibodies and 
 HIV vaccine design,
