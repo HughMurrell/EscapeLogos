@@ -117,3 +117,17 @@ variable accordingly.
 
 Also, we have a filter available for **gappy** sequences. You can set 
 the `GAPY_CUTOFF` constant in the script to suit your requirements.
+
+### citation
+
+The AA alignments and logos found in this repository are discussed in
+one of the following papers:
+
+<a id="1">[1]</a> 
+Willanson et. al. (2025). 
+Post-acquisition VRC01 escape mechanisms in antibody-mediated prevention:
+Implications for next generation CD4-broadly neutralizing antibodies and 
+HIV vaccine design,
+*in preparation*.
+
+If you make use of this script in your work, please cite one of these papers.
