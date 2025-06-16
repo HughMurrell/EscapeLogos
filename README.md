@@ -130,4 +130,5 @@ Implications for next generation CD4-broadly neutralizing antibodies and
 HIV vaccine design,
 *in preparation*.
 
-If you make use of this script in your work, please cite one of these papers.
+If you make use of this script to create escape logos for your sequences,
+please cite one of the above papers.
