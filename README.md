@@ -3,6 +3,8 @@
 This repository provides a `Julia` script to generate an escape logo 
 from a curated amino acid alignment.
 
+![sample logo](escape.svg "logo showing escape at coords 279, 280 and 459 ")
+
 ### Installing Julia (version 1.10.5)
 
 We recommend you use the `juliaup` version manager to install julia.
