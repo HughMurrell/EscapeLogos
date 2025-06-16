@@ -72,11 +72,45 @@ The `precompile` command above is not strictly needed but is useful
 if there are issues with installing the `julia` packages listed in
 `Project.toml`
 
-### running the `escapelogos` script
+### preparing your alignments
 
-Place your alignments in the alignments directory and run the script
+Place your curated AA alignments as fasta files in the alignments directory. 
+
+The first sequence in each fasta file must be the reference sequence
+to which the epitope cordinates in the script refer.
+
+The second sequence in each fasta file should be a sequence from which
+**escape** is estimated. We use a consensus of the first timepoint for
+this sequence.
+
+All other sequence identifiers in each fasta file should be annotated with
+the text **tpn** where **n** is the timepoint for that sequence. In
+our case we use **tp1** for the first timepoint and **tp2** for the second
+timepoint. 
+
+### running the script
+
+to run the script, type
 
 ```julia
 julia escapelogos.jl
 ```
+and the script will parse the alignments in the `alignments` directory 
 and the resulting `svg` logos will appear in the `escape_logos` directory.
+
+alternatively, you can specify input and output directories as follows:
+
+```julia
+julia escapelogos.jl alignment_directory logo_directory
+```
+
+### modifying the script
+
+To modify the script, use any text editor. For example you may want to
+create your own epitope coordinates. To do this, towards the end of the
+script you will find definitions for the default epitope and two others.
+Use the same structure to define your own epitope and then set the **ept**
+variable accordingly.
+
+Also, we have a filter available for **gappy** sequences. You can set this
+constant in the script to suit your requirements.

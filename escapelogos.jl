@@ -2,7 +2,7 @@ using Pkg
 Pkg.activate("./")
 Pkg.instantiate()
 
-using CSV, FASTX, DataFrames, Dates
+using CSV, FASTX, DataFrames, Dates, BioSequences
 using Statistics: mean
 using Luxor
 using Colors
@@ -526,53 +526,6 @@ function aa_color_fun(ch)
 end
 (aa_color_fun).(collect(aas))
 
-# default epitope
-ept = Dict()
-ept[1]=197:198
-ept[2]=230:230
-ept[3]=276:276
-ept[4]=278:282
-ept[5]=365:371
-ept[6]=427:428
-ept[7]=430:430
-ept[8]=455:463
-ept[9]=465:465
-ept[10]=467:467
-ept[11]=469:469
-ept[12]=471:474
-
-# 3L6:
-ept_3L6 = Dict()
-ept_3L6[1]=262:262
-ept_3L6[2]=295:297
-ept_3L6[3]=301:302
-ept_3L6[4]=323:323
-ept_3L6[5]=330:330
-ept_3L6[6]=332:332
-ept_3L6[7]=439:442
-ept_3L6[8]=444:446
-
- 
-
-# 3D14_1E7:
-ept_3D14_1E7=Dict()
-ept_3D14_1E7[1]=63:65
-ept_3D14_1E7[2]=134:134
-ept_3D14_1E7[3]=156:156
-ept_3D14_1E7[4]=163:163
-ept_3D14_1E7[5]=168:173
-ept_3D14_1E7[6]=185:185
-ept_3D14_1E7[7]=192:194
-ept_3D14_1E7[8]=197:198
-ept_3D14_1E7[9]=206:207
-ept_3D14_1E7[10]=300:308
-ept_3D14_1E7[11]=318:318
-ept_3D14_1E7[12]=321:325
-ept_3D14_1E7[13]=368:368
-ept_3D14_1E7[14]=425:425
-ept_3D14_1E7[15]=428:430
-ept_3D14_1E7[16]=438:441
-
 
 function generate_logo_frames(fasta_path, ept, outdir; file_count=0, prefix="")
     logo_frames=[]
@@ -582,10 +535,10 @@ function generate_logo_frames(fasta_path, ept, outdir; file_count=0, prefix="")
     @show(donor)
     records = collect(FASTX.FASTA.Reader(open(fasta_path)))
     all_seqs = (x->FASTX.sequence(String,x)).(records)
-    all_nams = FASTX.description.(records)
+    all_nams = FASTX.identifier.(records)
     gapyness = (x->sum(collect(x).=='-')/length(x)).(all_seqs)
     @show gapyness[1], maximum(gapyness)
-    sel_inds = gapyness .<= 1.0 # 1 keeps all, try 0.05 here to get rid of 5% gappy sequences
+    sel_inds = gapyness .<= GAPY_CUTOFF
     sel_inds[1] = true
     sel_inds[2] = true
     println("keeping $(sum(sel_inds)) out of $(length(all_seqs))")
@@ -643,8 +596,8 @@ function generate_logo_frames(fasta_path, ept, outdir; file_count=0, prefix="")
     rest_nams=all_nams[3:end]  # use 3:end for ellpaca
     rest_seqs=seqs[3:end]   # use 3:end for ellpaca
     fvsc=0
-    visits=union((x->split(x,"_")[2][3]).(rest_nams))
-    fvsc=sum([ string(split(nm,"_")[2][3]) == string(visits[1]) for nm in rest_nams ])
+    visits=union((x->split(x,"_")[end][3]).(rest_nams))
+    fvsc=sum([ string(split(nm,"_")[end][3]) == string(visits[1]) for nm in rest_nams ])
         # visits=union((x->x[12:12]).(rest_nams)) # for ellpaca
         # fvsc=sum([ string(nm[12:12]) == visits[1] for nm in rest_nams ])
     @show visits
@@ -653,7 +606,7 @@ function generate_logo_frames(fasta_path, ept, outdir; file_count=0, prefix="")
     p=nothing
     for visit in visits
         sel_ind = [ ]
-        sel_ind = [ split(nm,"_")[2][3] == visit for nm in rest_nams ]
+        sel_ind = [ split(nm,"_")[end][3] == visit for nm in rest_nams ]
         # sel_ind = [ string(nm[12:12]) == visit for nm in rest_nams ]
         lvsc = sum(sel_ind)
         X = (x->max(x,0)).(reshape(reduce(hcat, onehot.(rest_seqs[sel_ind])), 
@@ -776,21 +729,125 @@ function my_write_fasta(filename, seqs;
     close(stream)
 end
 
-###################### script starts here #############################
+#### code to massage CAP alignments with tp annotations ####
 
-# produce two logo plots for each alignment file, one showing escape from
-# consensus at tp1, the other showing escape from consensus at tp2
+function tp_annotate(in_file, out_file)
+    # in_file="CAP188alignment/CAP188_functional_aa_ali.fasta"
+    # out_file="CAP188alignment/aligned_CAP188_2000_4300.fasta"
+    records = collect(FASTX.FASTA.Reader(open(in_file)))
+    all_seqs = (x->FASTX.sequence(String,x)).(records)
+    all_nams = String.(FASTX.identifier.(records))
+    visits = sort(union((x->x[8:11]).(all_nams[3:end])))
+    tp_count=0
+    for visit in visits
+        sel_inds = (x->x[8:11]==visit).(all_nams)
+        println(visit, " -> ", sum(sel_inds))
+        global tp_count += 1
+        for i in 1:length(sel_inds)
+            sel_inds[i] ? all_nams[i] = all_nams[i] * "_tp$(tp_count)" : nothing
+        end
+    end
+    my_write_fasta(out_file,all_seqs,names=all_nams,aa=true)
+    return
+end
+
+
+##################### set the epitope coordinartes ####################
+
+# default epitope
+ept = Dict()
+ept[1]=197:198
+ept[2]=230:230
+ept[3]=276:276
+ept[4]=278:282
+ept[5]=365:371
+ept[6]=427:428
+ept[7]=430:430
+ept[8]=455:463
+ept[9]=465:465
+ept[10]=467:467
+ept[11]=469:469
+ept[12]=471:474
+
+# 3L6:
+ept_3L6 = Dict()
+ept_3L6[1]=262:262
+ept_3L6[2]=295:297
+ept_3L6[3]=301:302
+ept_3L6[4]=323:323
+ept_3L6[5]=330:330
+ept_3L6[6]=332:332
+ept_3L6[7]=439:442
+ept_3L6[8]=444:446
+
+ 
+
+# 3D14_1E7:
+ept_3D14_1E7=Dict()
+ept_3D14_1E7[1]=63:65
+ept_3D14_1E7[2]=134:134
+ept_3D14_1E7[3]=156:156
+ept_3D14_1E7[4]=163:163
+ept_3D14_1E7[5]=168:173
+ept_3D14_1E7[6]=185:185
+ept_3D14_1E7[7]=192:194
+ept_3D14_1E7[8]=197:198
+ept_3D14_1E7[9]=206:207
+ept_3D14_1E7[10]=300:308
+ept_3D14_1E7[11]=318:318
+ept_3D14_1E7[12]=321:325
+ept_3D14_1E7[13]=368:368
+ept_3D14_1E7[14]=425:425
+ept_3D14_1E7[15]=428:430
+ept_3D14_1E7[16]=438:441
+
+
+
+
+###################### script starts here #############################
+println()
+println("USAGE: julia escapelogos.jl alignments_dir logos_dir")
+println("where alignments_dir is an existing directory holding your fasta AA alignments")
+println("and logos_dir is a directory that will contain your escape logos after the run")
+println()
+
+##################### override epitope settings here ####################
+
+ept = ept
+
+########################## set GAPY_CUTOFF cutoff here ############################
+# 1.0 keeps all sequences, try 0.05 here to get rid of sequences with > 5% gapyness
+
+const GAPY_CUTOFF = 0.05
+
+# produce logo plots for each alignment file showing escape from
+# consensus at tp1, for all timepoints
 #
-# using the default epitope, ept
-#
-@show ept
+ 
 in_dir = "alignments/"
+if length(ARGS) > 0
+    in_dir=ARGS[1]
+    endswith(in_dir,"/") ? nothing : in_dir=in_dir*"/"
+end
+if ! isdir(in_dir)
+    println("ERROR: alignment directory, $(in_dir) does not exist")
+    exit()
+end
 filepaths = readdir(in_dir)
-filepaths = in_dir .* filepaths[(x->endswith(x,".fasta")).(filepaths)] 
+filepaths = in_dir .* filepaths[(x->endswith(x,".fasta")).(filepaths)]
+if length(filepaths) == 0
+    println("ERROR: no fasta files in $(in_dir)")
+    exit()
+end
 @show filepaths           
 
 out_dir="escape_logos/"
+if length(ARGS) > 1
+    out_dir=ARGS[2]
+    endswith(out_dir,"/") ? nothing : out_dir=out_dir*"/"
+end
 mkpath(out_dir)
+
 count=0
 for filepath in filepaths
     println(filepath)
@@ -798,7 +855,7 @@ for filepath in filepaths
     generate_logo_frames(filepath, ept,out_dir,file_count=count,prefix="")
 end
 
-# now get rid or timepoint 1 escape logos
+# code to get rid or timepoint 1 escape logos if they are not needed
 filepaths = readdir(out_dir)
 filepaths = out_dir .* filepaths[(x->endswith(x,"timepoint_1.svg")).(filepaths)]
 for filepath in filepaths
@@ -807,3 +864,6 @@ for filepath in filepaths
 end
 
 @show count
+
+exit()
+
