@@ -531,14 +531,14 @@ function generate_logo_frames(fasta_path, ept, outdir; file_count=0, prefix="")
     logo_frames=[]
     progress_bar=" "
     donor=""
-    donor=join(split(basename(fasta_path),'_')[2:4],'_')
+    donor=basename(fasta_path)[1:end-6]
     @show(donor)
     records = collect(FASTX.FASTA.Reader(open(fasta_path)))
     all_seqs = (x->FASTX.sequence(String,x)).(records)
     all_nams = FASTX.identifier.(records)
     gapyness = (x->sum(collect(x).=='-')/length(x)).(all_seqs)
     @show gapyness[1], maximum(gapyness)
-    sel_inds = gapyness .<= GAPY_CUTOFF
+    sel_inds = gapyness .<= GAPPY_CUTOFF
     sel_inds[1] = true
     sel_inds[2] = true
     println("keeping $(sum(sel_inds)) out of $(length(all_seqs))")
@@ -815,10 +815,10 @@ println()
 
 ept = ept
 
-########################## set GAPY_CUTOFF cutoff here ############################
+########################## set GAPPY_CUTOFF cutoff here ############################
 # 1.0 keeps all sequences, try 0.05 here to get rid of sequences with > 5% gapyness
 
-const GAPY_CUTOFF = 0.05
+const GAPPY_CUTOFF = 0.05
 
 # produce logo plots for each alignment file showing escape from
 # consensus at tp1, for all timepoints
@@ -839,7 +839,6 @@ if length(filepaths) == 0
     println("ERROR: no fasta files in $(in_dir)")
     exit()
 end
-@show filepaths           
 
 out_dir="logos/"
 if length(ARGS) > 1
@@ -855,7 +854,7 @@ for filepath in filepaths
     generate_logo_frames(filepath, ept,out_dir,file_count=count,prefix="")
 end
 
-exit()
+# exit()
 
 # code to get rid or timepoint 1 escape logos if they are not needed
 filepaths = readdir(out_dir)

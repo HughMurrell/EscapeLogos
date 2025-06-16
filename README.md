@@ -116,7 +116,7 @@ Use the same structure to define your own epitope and then set the **ept**
 variable accordingly.
 
 Also, we have a filter available for **gappy** sequences. You can set 
-the `GAPY_CUTOFF` constant in the script to suit your requirements.
+the `GAPPY_CUTOFF` constant in the script to suit your requirements.
 
 ### citation
 
