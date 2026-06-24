@@ -519,10 +519,12 @@ aa_colors = Dict(
      ' '=>RGB{Float64}(1.0,1.0,1.0));
 
 function aa_color_fun(ch)
-    if ch=='|' || ch=='∇'
+    if ch=='|'
         return("grey80")
+    elseif ch=='∇'
+        return("grey60") # ("grey90") # ("white")
     end
-    return(aa_color(ch)) #s[ch])
+    return(aa_color(ch)) #s[ch]
 end
 (aa_color_fun).(collect(aas))
 
@@ -645,7 +647,7 @@ function generate_logo_frames(fasta_path, ept, outdir; file_count=0, prefix="")
         #     file_count+=1
         # end
         progress_bar=progress_bar*">"
-        title="$(donor)_timepoint_$(visit)"
+        title="$(donor)"   # "_timepoint_$(visit)"
         if length(progress_bar) > 0  # use 2 for 2 tp HTVN
             pf=luxor_sequence_logo_aa(ref_logo,cons_logo,esc_logo,freq_logo,
                 aa_color_fun,size(cons)[2],20,path_png,
@@ -755,19 +757,19 @@ end
 ##################### set the epitope coordinartes ####################
 
 # default epitope
-ept = Dict()
-ept[1]=197:198
-ept[2]=230:230
-ept[3]=276:276
-ept[4]=278:282
-ept[5]=365:371
-ept[6]=427:428
-ept[7]=430:430
-ept[8]=455:463
-ept[9]=465:465
-ept[10]=467:467
-ept[11]=469:469
-ept[12]=471:474
+ept_VRC01 = Dict()
+ept_VRC01[1]=197:198
+ept_VRC01[2]=230:230
+ept_VRC01[3]=276:276
+ept_VRC01[4]=278:282
+ept_VRC01[5]=365:371
+ept_VRC01[6]=427:428
+ept_VRC01[7]=430:430
+ept_VRC01[8]=455:463
+ept_VRC01[9]=465:465
+# ept_VRC01[10]=467:467
+ept_VRC01[10]=469:469
+ept_VRC01[11]=471:474
 
 # 3L6:
 ept_3L6 = Dict()
@@ -813,12 +815,12 @@ println()
 
 ##################### override epitope settings here ####################
 
-ept = ept
+ept = ept_VRC01
 
 ########################## set GAPPY_CUTOFF cutoff here ############################
 # 1.0 keeps all sequences, try 0.05 here to get rid of sequences with > 5% gapyness
 
-const GAPPY_CUTOFF = 0.05
+const GAPPY_CUTOFF = 1.0 #0.05
 
 # produce logo plots for each alignment file showing escape from
 # consensus at tp1, for all timepoints
@@ -851,7 +853,7 @@ count=0
 for filepath in filepaths
     println(filepath)
     global count+=1
-    generate_logo_frames(filepath, ept,out_dir,file_count=count,prefix="")
+    generate_logo_frames(filepath, ept, out_dir, file_count=count, prefix="")
 end
 
 # exit()
