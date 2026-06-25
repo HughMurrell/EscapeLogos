@@ -107,6 +107,18 @@ alternatively, you can specify input and output directories as follows:
 julia escapelogos.jl alignment_directory logo_directory
 ```
 
+### testing the script
+
+to test your installation we have provided a test alignment in the `test_alignments`
+directory which when processed by the script as follows should produce an svg logo 
+image in the `test_logos` directory
+
+```julia
+julia escapelogos.jl test_alignments test_logos
+```
+ 
+This logo image should be identical to the logo image displayed at the top of this page.
+ 
 ### modifying the script
 
 To modify the script, use any text editor. For example you may want to
